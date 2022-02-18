@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="https://bdx-acs-test.payzen.eu/acs/images/pass/pass.ico">
+    <title>3D Secure Simulation - Injector</title>
+    <link rel="stylesheet" href="creq_data/bootstrap.css">
+    <script src="creq_data/jquery-3.js"></script>
+    <script src="creq_data/popper.js"></script>
+    <script src="creq_data/bootstrap.js"></script>
+    <style>
+        .center {
+            text-align: center;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        .tip {
+            font-size: 12px;
+        }
+
+        .rounded-border {
+            border: 2px solid #28a745;
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        .hide {
+            display: none;
+        }
+
+        #loading {
+            width: 100%;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .div-checkbox {
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chk-container {
+            display: block;
+            position: relative;
+            padding-left: 35px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            font-size: 22px;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .chk-container input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .checkmark {
+            position: absolute;
+            top: 4px;
+            left: 2px;
+            height: 25px;
+            width: 25px;
+            background-color: #eee;
+            border-radius: 50%;
+        }
+
+        .chk-container:hover input ~ .checkmark {
+            background-color: #ccc;
+        }
+
+        .chk-container input:checked ~ .checkmark {
+            background-color: #28a745;
+        }
+
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+
+        .chk-container input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        .chk-container .checkmark:after {
+            top: 9px;
+            left: 9px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: white;
+        }
+
+        .btn-group-bottom {
+            margin: auto 5px 5px;
+            width: 100%;
+            display: inline-flex;
+        }
+
+        .challenge {
+            height: calc(100% - 3em);
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (min-width: 576px) {
+            .container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="rounded-border" style="height: 600px;">
+<div class="container" style="height: 100%;width: 100%; margin:0; overflow: auto;display: flex;flex-direction: column;">
+    <div class="row" style="height: 50px">
+        <img src="creq_data/yourbank.png" style="position: absolute; left:25px">
+        <img src="creq_data/visa_3ds-small.png" style="position: absolute; right:25px">
+    </div>
+    <div class="row" style="margin-top: 5px">
+        <div class="col-sm-12">
+            <h5 class="center">3DS 2.x Authentication</h5>
+        </div>
+    </div>
+    <div class="row" style="height: 100%">
+        <div id="loading" class="hide">
+            <div class="spinner-border text-success" style="width: 3rem; height: 3rem;" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+        <div id="challenges" class="">
+            <div id="challenge1" class="">
+                <div class="col-sm-12 challenge">
+                    <p>Please answer 2 questions in order to continue the transaction.<br><br>We have sent you a text message with a code to your registered mobile number ending in 9999.<br><br>You are paying Merchant <span id="merchant">Boutique de demo</span> with the amount <span id="amount">0,00&nbsp;€</span>.</p>
+                    <div>
+                        <label for="code">Enter your code below:</label>
+                        <input type="text" class="form-control" id="code" name="code" value="12647">
+                    </div>
+                    <div class="center">
+                        <a onclick="fillChallenge1()" href="#" class="tip" id="chal1tip">Expected value (12647)</a>
+                    </div>
+                </div>
+            </div>
+            <div id="challenge2" class="hide" style="height: 100%">
+                <div class="col-sm-12 challenge">
+                    <p>Please answer 2 questions in order to continue the transaction.<br><br>Question 2:<br><b>5 + 5 = ?</b></p>
+                    <div class="div-checkbox">
+                        <label class="chk-container">5
+                            <input type="radio" name="radio" value="5" id="five">
+                            <span class="checkmark"></span>
+                        </label>
+                        <label class="chk-container">10
+                            <input type="radio" name="radio" value="10" id="ten" checked="checked">
+                            <span class="checkmark"></span>
+                        </label>
+                        <label class="chk-container">15
+                            <input type="radio" name="radio" value="15" id="fifteen">
+                            <span class="checkmark"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="btn-group btn-group-bottom">
+            <button id="cancel" class="btn btn-secondary btn-cancel" onclick="cancel()">Cancel</button>
+            <button id="validate" class="btn btn-success btn-validate" onclick="loading()">Submit</button>
+        </div>
+    </div>
+</div>
+
+<form id="form" method="post" action="/acs/v2/challengeComplete">
+    <input type="hidden" id="creq" name="creq" value="eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6Ijk3Y2Q3OTUwLWQyYTktNGVmYy1iYzIyLTg0NDIwNGMyMDY3ZiIsIm1lc3NhZ2VFeHRlbnNpb24iOlt7ImNyaXRpY2FsaXR5SW5kaWNhdG9yIjpmYWxzZSwiZGF0YSI6eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6Ijk3Y2Q3OTUwLWQyYTktNGVmYy1iYzIyLTg0NDIwNGMyMDY3ZiIsIm1lc3NhZ2VUeXBlIjoiQVJlcSIsIm1lc3NhZ2VWZXJzaW9uIjoiMi4xLjAiLCJkZXZpY2VDaGFubmVsIjoiMDIiLCJ0aHJlZURTU2VydmVyUmVmTnVtYmVyIjoiM0RTX0xPQV9TRVJfTFlORV8wMjAxMDBfMDAzNjkiLCJ0aHJlZURTU2VydmVyT3BlcmF0b3JJRCI6IjEwMDY5NzMyIiwidGhyZWVEU0NvbXBJbmQiOiJZIiwidGhyZWVEU1JlcXVlc3RvckF1dGhlbnRpY2F0aW9uSW5kIjoiMDQiLCJ0aHJlZURTUmVxdWVzdG9yQ2hhbGxlbmdlSW5kIjoiMDQiLCJ0aHJlZURTUmVxdWVzdG9ySUQiOiIxMDA3MTUyOSo3Mjk2MDI0IiwidGhyZWVEU1JlcXVlc3Rvck5hbWUiOiJCb3V0aXF1ZSBkZSBkZW1vIiwidGhyZWVEU1JlcXVlc3RvclVSTCI6Imh0dHBzOi8vbHlyYS5jb20iLCJ0aHJlZURTU2VydmVyVVJMIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL3Byb3RlY3RlZC92MS8zZHN2Mi9ub3RpZnkvcnJlcT9uZXR3b3JrPVZJU0EmbWVzc2FnZVZlcnNpb249Mi4xLjAmZGV2aWNlQ2hhbm5lbD1CUk9XU0VSJmNoYWxsZW5nZUluZD1DSEFMTEVOR0VfTUFOREFURUQmYXV0aGVudGljYXRlSWQ9OTdjZDc5NTAtZDJhOS00ZWZjLWJjMjItODQ0MjA0YzIwNjdmIiwiYWNxdWlyZXJCSU4iOiI0OTc2NzAiLCJhY3F1aXJlck1lcmNoYW50SUQiOiI3Mjk2MDI0IiwiYWRkck1hdGNoIjoiWSIsImJyb3dzZXJBY2NlcHRIZWFkZXIiOiJ0ZXh0L2h0bWwsYXBwbGljYXRpb24veGh0bWwreG1sLGFwcGxpY2F0aW9uL3htbDtxPTAuOSxpbWFnZS9hdmlmLGltYWdlL3dlYnAsKi8qO3E9MC44IiwiYnJvd3NlcklQIjoiMjEzLjI3LjI0NS4xNzgiLCJicm93c2VySmF2YUVuYWJsZWQiOnRydWUsImJyb3dzZXJMYW5ndWFnZSI6ImVzLUVTIiwiYnJvd3NlckNvbG9yRGVwdGgiOiIyNCIsImJyb3dzZXJTY3JlZW5IZWlnaHQiOiIxMDgwIiwiYnJvd3NlclNjcmVlbldpZHRoIjoiMTkyMCIsImJyb3dzZXJUWiI6Ii02MCIsImJyb3dzZXJVc2VyQWdlbnQiOiJNb3ppbGxhLzUuMCAoTWFjaW50b3NoOyBJbnRlbCBNYWMgT1MgWCAxMC4xNTsgcnY6OTcuMCkgR2Vja28vMjAxMDAxMDEgRmlyZWZveC85Ny4wIiwiY2FyZEV4cGlyeURhdGUiOiIyNDEwIiwiYWNjdEluZm8iOnsic2hpcE5hbWVJbmRpY2F0b3IiOiIwMSJ9LCJhY2N0TnVtYmVyIjoiNDk3MDExMDAwMDAwMTAwMyIsImVtYWlsIjoicDIwMjIwMjE4MTI0NEB0ZXN0LmNvbSIsIm1jYyI6IjUwNzIiLCJtZXJjaGFudENvdW50cnlDb2RlIjoiMjUwIiwibWVyY2hhbnROYW1lIjoiQm91dGlxdWUgZGUgZGVtbyIsIm1lc3NhZ2VDYXRlZ29yeSI6IjAxIiwibm90aWZpY2F0aW9uVVJMIjoiaHR0cHM6Ly9iZHgtcGFzcy5wYXl6ZW4uZXUvcHVibGljL3YxLzNkc3YyL25vdGlmeS9jcmVzLzk3Y2Q3OTUwLWQyYTktNGVmYy1iYzIyLTg0NDIwNGMyMDY3Zi9WSVNBIiwicHVyY2hhc2VBbW91bnQiOiIwIiwicHVyY2hhc2VDdXJyZW5jeSI6Ijk3OCIsInB1cmNoYXNlRXhwb25lbnQiOiIyIiwicHVyY2hhc2VEYXRlIjoiMjAyMjAyMTgxMTQ2MjciLCJ0cmFuc1R5cGUiOiIwMSJ9LCJpZCI6IlNJTVVMQVRJT04tQVJFUSIsIm5hbWUiOiJTSU1VTEFUSU9OLUFSRVEifV0sIm1lc3NhZ2VUeXBlIjoiQ1JlcSIsIm1lc3NhZ2VWZXJzaW9uIjoiMi4xLjAiLCJhY3NUcmFuc0lEIjoiZDFiOTAzMWMtM2IzMS00MjYzLThmNDMtNjFiYzQzOTUxMWE3IiwiY2hhbGxlbmdlV2luZG93U2l6ZSI6IjAzIn0">
+    <input type="hidden" id="threeDSSessionData" name="threeDSSessionData" value="H4sIAAAAAAAAAC1R25KqMBD8ot0KICiPEEQTSTDczYuFwAoBEVZXLl9_sI4PXVPT01PdU1NMWPAEgzTm3Um2AfeRhhrTDCX6Q_wVIHA1JKBLIogeqPXUDC7z-tPf7Aef3nocEBHKqAXfxYSHU0JnJo9lGoPKrfA6gfg3WfYWzJ5NpqU-Fm5-c_keS9wfM9SaGRJdhmqKWDgSL1T3XqRTFqpbFnm2Zw-VsyBf4DYLglxwK1NpYDy5hUvXB4DHXDgxFkSgp2sxQIQBTjMaqMhvH8-__zlw7EfU_HDyJ9vkiO0f-fjwjw-x8JINVA7EXaaQ9z2MRTRA1aJJygGJ-0gFk0hwlai4Kj_s2z03pfg66iVn9irculXYBJfw0IzRnLX27tVrQ6Nt87ze-gqwRXAV9QEdxio9wmHjrnckehhGaTZ1yVfx2IM2zAtrT4T5Y_v-pYb63ZiFrpi_L7auyp0cZD2G09kei2MaOmWjPzDOWecXUffMNcNrf3tX5sauuvc1Hgica38Y4f7Cqu7k0FjLNtLALHfjaJJbO7cgK_cgLew-VpybdjwTqzcHrBfeK9vqhW0GrT0btCs95QDOrYA-5V3UOyqMPO9i0uPaYG5RmE3ay_CLMG1XeN2VapdI7kz-7K_-0YqD82YzOR7rAphFFzNV63jIwruE8yDwS18_KJCnrFHblb589_U3lewfBAv9AqkCAAA">
+    <input type="hidden" id="challengeSuccess" name="challengeSuccess" value="true">
+    <input type="hidden" id="challengeCancel" name="challengeCancel" value="false">
+</form>
+
+<script>
+    let creq = 'eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6Ijk3Y2Q3OTUwLWQyYTktNGVmYy1iYzIyLTg0NDIwNGMyMDY3ZiIsIm1lc3NhZ2VFeHRlbnNpb24iOlt7ImNyaXRpY2FsaXR5SW5kaWNhdG9yIjpmYWxzZSwiZGF0YSI6eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6Ijk3Y2Q3OTUwLWQyYTktNGVmYy1iYzIyLTg0NDIwNGMyMDY3ZiIsIm1lc3NhZ2VUeXBlIjoiQVJlcSIsIm1lc3NhZ2VWZXJzaW9uIjoiMi4xLjAiLCJkZXZpY2VDaGFubmVsIjoiMDIiLCJ0aHJlZURTU2VydmVyUmVmTnVtYmVyIjoiM0RTX0xPQV9TRVJfTFlORV8wMjAxMDBfMDAzNjkiLCJ0aHJlZURTU2VydmVyT3BlcmF0b3JJRCI6IjEwMDY5NzMyIiwidGhyZWVEU0NvbXBJbmQiOiJZIiwidGhyZWVEU1JlcXVlc3RvckF1dGhlbnRpY2F0aW9uSW5kIjoiMDQiLCJ0aHJlZURTUmVxdWVzdG9yQ2hhbGxlbmdlSW5kIjoiMDQiLCJ0aHJlZURTUmVxdWVzdG9ySUQiOiIxMDA3MTUyOSo3Mjk2MDI0IiwidGhyZWVEU1JlcXVlc3Rvck5hbWUiOiJCb3V0aXF1ZSBkZSBkZW1vIiwidGhyZWVEU1JlcXVlc3RvclVSTCI6Imh0dHBzOi8vbHlyYS5jb20iLCJ0aHJlZURTU2VydmVyVVJMIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL3Byb3RlY3RlZC92MS8zZHN2Mi9ub3RpZnkvcnJlcT9uZXR3b3JrPVZJU0EmbWVzc2FnZVZlcnNpb249Mi4xLjAmZGV2aWNlQ2hhbm5lbD1CUk9XU0VSJmNoYWxsZW5nZUluZD1DSEFMTEVOR0VfTUFOREFURUQmYXV0aGVudGljYXRlSWQ9OTdjZDc5NTAtZDJhOS00ZWZjLWJjMjItODQ0MjA0YzIwNjdmIiwiYWNxdWlyZXJCSU4iOiI0OTc2NzAiLCJhY3F1aXJlck1lcmNoYW50SUQiOiI3Mjk2MDI0IiwiYWRkck1hdGNoIjoiWSIsImJyb3dzZXJBY2NlcHRIZWFkZXIiOiJ0ZXh0L2h0bWwsYXBwbGljYXRpb24veGh0bWwreG1sLGFwcGxpY2F0aW9uL3htbDtxPTAuOSxpbWFnZS9hdmlmLGltYWdlL3dlYnAsKi8qO3E9MC44IiwiYnJvd3NlcklQIjoiMjEzLjI3LjI0NS4xNzgiLCJicm93c2VySmF2YUVuYWJsZWQiOnRydWUsImJyb3dzZXJMYW5ndWFnZSI6ImVzLUVTIiwiYnJvd3NlckNvbG9yRGVwdGgiOiIyNCIsImJyb3dzZXJTY3JlZW5IZWlnaHQiOiIxMDgwIiwiYnJvd3NlclNjcmVlbldpZHRoIjoiMTkyMCIsImJyb3dzZXJUWiI6Ii02MCIsImJyb3dzZXJVc2VyQWdlbnQiOiJNb3ppbGxhLzUuMCAoTWFjaW50b3NoOyBJbnRlbCBNYWMgT1MgWCAxMC4xNTsgcnY6OTcuMCkgR2Vja28vMjAxMDAxMDEgRmlyZWZveC85Ny4wIiwiY2FyZEV4cGlyeURhdGUiOiIyNDEwIiwiYWNjdEluZm8iOnsic2hpcE5hbWVJbmRpY2F0b3IiOiIwMSJ9LCJhY2N0TnVtYmVyIjoiNDk3MDExMDAwMDAwMTAwMyIsImVtYWlsIjoicDIwMjIwMjE4MTI0NEB0ZXN0LmNvbSIsIm1jYyI6IjUwNzIiLCJtZXJjaGFudENvdW50cnlDb2RlIjoiMjUwIiwibWVyY2hhbnROYW1lIjoiQm91dGlxdWUgZGUgZGVtbyIsIm1lc3NhZ2VDYXRlZ29yeSI6IjAxIiwibm90aWZpY2F0aW9uVVJMIjoiaHR0cHM6Ly9iZHgtcGFzcy5wYXl6ZW4uZXUvcHVibGljL3YxLzNkc3YyL25vdGlmeS9jcmVzLzk3Y2Q3OTUwLWQyYTktNGVmYy1iYzIyLTg0NDIwNGMyMDY3Zi9WSVNBIiwicHVyY2hhc2VBbW91bnQiOiIwIiwicHVyY2hhc2VDdXJyZW5jeSI6Ijk3OCIsInB1cmNoYXNlRXhwb25lbnQiOiIyIiwicHVyY2hhc2VEYXRlIjoiMjAyMjAyMTgxMTQ2MjciLCJ0cmFuc1R5cGUiOiIwMSJ9LCJpZCI6IlNJTVVMQVRJT04tQVJFUSIsIm5hbWUiOiJTSU1VTEFUSU9OLUFSRVEifV0sIm1lc3NhZ2VUeXBlIjoiQ1JlcSIsIm1lc3NhZ2VWZXJzaW9uIjoiMi4xLjAiLCJhY3NUcmFuc0lEIjoiZDFiOTAzMWMtM2IzMS00MjYzLThmNDMtNjFiYzQzOTUxMWE3IiwiY2hhbGxlbmdlV2luZG93U2l6ZSI6IjAzIn0';
+    let sessionData = 'H4sIAAAAAAAAAC1R25KqMBD8ot0KICiPEEQTSTDczYuFwAoBEVZXLl9_sI4PXVPT01PdU1NMWPAEgzTm3Um2AfeRhhrTDCX6Q_wVIHA1JKBLIogeqPXUDC7z-tPf7Aef3nocEBHKqAXfxYSHU0JnJo9lGoPKrfA6gfg3WfYWzJ5NpqU-Fm5-c_keS9wfM9SaGRJdhmqKWDgSL1T3XqRTFqpbFnm2Zw-VsyBf4DYLglxwK1NpYDy5hUvXB4DHXDgxFkSgp2sxQIQBTjMaqMhvH8-__zlw7EfU_HDyJ9vkiO0f-fjwjw-x8JINVA7EXaaQ9z2MRTRA1aJJygGJ-0gFk0hwlai4Kj_s2z03pfg66iVn9irculXYBJfw0IzRnLX27tVrQ6Nt87ze-gqwRXAV9QEdxio9wmHjrnckehhGaTZ1yVfx2IM2zAtrT4T5Y_v-pYb63ZiFrpi_L7auyp0cZD2G09kei2MaOmWjPzDOWecXUffMNcNrf3tX5sauuvc1Hgica38Y4f7Cqu7k0FjLNtLALHfjaJJbO7cgK_cgLew-VpybdjwTqzcHrBfeK9vqhW0GrT0btCs95QDOrYA-5V3UOyqMPO9i0uPaYG5RmE3ay_CLMG1XeN2VapdI7kz-7K_-0YqD82YzOR7rAphFFzNV63jIwruE8yDwS18_KJCnrFHblb589_U3lewfBAv9AqkCAAA';
+    let currentChallenge = 0;
+    let expectedValue = parseInt(Math.random() * 10000 + 10000, 10).toString();
+    $("#code").val(expectedValue);
+
+    const chal1engeTip = $("#chal1tip");
+    chal1engeTip.text(chal1engeTip.text() + " (" + expectedValue + ")");
+    loading();
+    $("#creq").val(creq);
+    $("#threeDSSessionData").val(sessionData);
+    let json = JSON.parse(decode(creq));
+
+    let challengeWindowSize = json.challengeWindowSize;
+    if ("01" === challengeWindowSize) {
+        $('body')[0].style.height = '400px';
+    } else if ("02" === challengeWindowSize) {
+        $('body')[0].style.height = '400px';
+    } else if ("03" === challengeWindowSize) {
+        $('body')[0].style.height = '600px';
+    } else if ("04" === challengeWindowSize) {
+        $('body')[0].style.height = '400px';
+    } else if ("05" === challengeWindowSize) {
+        $('html')[0].style.height = '100%'
+        $('body')[0].style.height = '100%'
+    }
+
+    customize();
+
+    function customize() {
+        $("#merchant").text('Boutique de demo' || "MerchantName");
+        $("#amount").text('0,00 €');
+    }
+
+    function nextChallenge() {
+        let success = false;
+        if (currentChallenge === 0) {
+            currentChallenge++;
+            success = true;
+        } else if (currentChallenge === 1) {
+            if ($("#code").val() !== expectedValue) {
+                wrongChallenge();
+            } else {
+                currentChallenge++;
+                success = true;
+            }
+        } else if (currentChallenge === 2) {
+            if ($("[name='radio']:checked").val() !== "10") {
+                wrongChallenge();
+            } else {
+                validateChallenge();
+            }
+        }
+
+        if (success) {
+            $("#challenge" + (currentChallenge - 1)).addClass("hide");
+            var challengeElement = $("#challenge" + currentChallenge);
+            challengeElement.removeClass("hide");
+        }
+    }
+
+    function fillChallenge1() {
+        $("#code").val(expectedValue);
+    }
+
+    function loading() {
+        $("#challenges").addClass("hide");
+        $("#loading").removeClass("hide");
+        setTimeout(function () {
+            $("#loading").addClass("hide");
+            $("#challenges").removeClass("hide");
+            nextChallenge();
+        }, 0);
+    }
+
+    function wrongChallenge() {
+        $("#challenges").addClass("hide");
+        $("#loading").removeClass("hide");
+        $("#challengeSuccess").val("false");
+        $("#form").submit();
+    }
+
+    function cancel() {
+        $("#challenges").addClass("hide");
+        $("#loading").removeClass("hide");
+        $("#challengeCancel").val("true");
+        $("#form").submit();
+    }
+
+    function validateChallenge() {
+        $("#challenges").addClass("hide");
+        $("#loading").removeClass("hide");
+        $("#challengeSuccess").val("true");
+        $("#form").submit();
+    }
+
+    function decode(str) {
+        return atob(str.replace(/_/g, '/').replace(/-/g, '+'));
+    }
+</script>
+
+
+<div></div></body></html>

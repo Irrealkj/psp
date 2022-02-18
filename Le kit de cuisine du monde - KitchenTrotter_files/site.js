@@ -1,0 +1,1 @@
+$(window).on("load",function(){blocsHeight('.content_banner .col-3');});function blocsHeight(selector){var biggestHeight=0;$(selector).each(function(){var eLHeight=$(this).innerHeight();if(eLHeight>biggestHeight){biggestHeight=eLHeight;}});$(selector).css("height",biggestHeight);}
